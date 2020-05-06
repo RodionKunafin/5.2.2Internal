@@ -3,9 +3,11 @@ package com.example.a522internal;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -13,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -23,7 +26,8 @@ public class MainActivity extends AppCompatActivity {
     Button btnOk;
     Button btnRegistration;
     CheckBox checkBox;
-    public SharedPreferences sharedPreferences;
+    Button btnSave;
+    
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,9 +38,27 @@ public class MainActivity extends AppCompatActivity {
         btnOk = findViewById(R.id.btnOk);
         btnRegistration = findViewById(R.id.btnRegistration);
         checkBox = findViewById(R.id.checkBox);
+        btnSave = findViewById(R.id.btnSave);
 
-        
-        checkBox.setOnCheckedChangeListener();
+
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (checkBox.isChecked()){
+                    SharedPreferences settings = getSharedPreferences("check", 0);
+                    settings.edit().putBoolean("check",true).commit();
+                    Toast toast = Toast.makeText(getApplicationContext(),"Данные сохранены во внешнее хранилище", Toast.LENGTH_LONG);
+                    toast.show();
+                    Loadtxt();
+                }
+                else {
+
+                }
+
+            }
+
+        });
+
 
 
 
@@ -104,12 +126,16 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-    private void save(final boolean isChecked) {
-        SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putBoolean("check", isChecked);
-        editor.commit();
-    }private boolean load() {
+    public void Loadtxt() {
+        if (isExternalStorageWriteble()) {
+            File file = new File(getApplicationContext().getExternalFilesDir(null),"log.txt");
+        }
+    }
+    public boolean isExternalStorageWriteble() {
+        String state = Environment.getExternalStorageState();
+        return Environment.DIRECTORY_DOWNLOADS.equals(state);
+    }
+    private boolean load() {
         SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
         return sharedPreferences.getBoolean("check", false);
     }
