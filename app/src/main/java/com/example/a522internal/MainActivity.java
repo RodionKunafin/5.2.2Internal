@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
     Button btnOk;
     CheckBox checkBox;
     Button btnSave;
+    Button btnRegistration;
 
 
     @Override
@@ -37,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
         btnOk = findViewById(R.id.btnOk);
         checkBox = findViewById(R.id.checkBox);
         btnSave = findViewById(R.id.btnSave);
+        btnRegistration = findViewById(R.id.btnRegistration);
 
 
         btnSave.setOnClickListener(new View.OnClickListener() {
@@ -48,30 +50,37 @@ public class MainActivity extends AppCompatActivity {
                     Toast toast = Toast.makeText(getApplicationContext(), "Данные сохранены во внешнее хранилище", Toast.LENGTH_LONG);
                     toast.show();
                     Loadtxt();
-                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(getExternalFilesDir(null), "LoginFile")))) {
-                        writer.write("Login");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(getExternalFilesDir(null), "PasswordFile")))) {
-                        writer.write("Password");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                } else {
-                    SharedPreferences settings = getSharedPreferences("check", Context.MODE_PRIVATE);
-                    settings.edit().putBoolean("check", false).apply();
-                    Toast.makeText(getApplicationContext(), "Данные сохранены во внутреннее хранилище", Toast.LENGTH_LONG).show();
-                    try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(openFileOutput("LoginFile", MODE_PRIVATE)))) {
-                        writer.write("Login");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(openFileOutput("PasswordFile", MODE_PRIVATE)))) {
-                        writer.write("Password");
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                }
+            }
+        });
+        btnRegistration.setOnClickListener(new View.OnClickListener() {
+            {
+                SharedPreferences settings = getSharedPreferences("check", Context.MODE_PRIVATE);
+                settings.edit().putBoolean("check", false).apply();
+                Toast.makeText(getApplicationContext(), "Данные сохранены во внутреннее хранилище", Toast.LENGTH_LONG).show();
+                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(openFileOutput("LoginFile", MODE_PRIVATE)))) {
+                    writer.write("Login");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(openFileOutput("PasswordFile", MODE_PRIVATE)))) {
+                    writer.write("Password");
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onClick(View v) {
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(getExternalFilesDir(null), "LoginFile")))) {
+                    writer.write(login.getText().toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(getExternalFilesDir(null), "PasswordFile")))) {
+                    writer.write(password.getText().toString());
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         });
@@ -79,52 +88,78 @@ public class MainActivity extends AppCompatActivity {
         btnOk.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                BufferedReader reader = null;
-                try {
-                    reader = new BufferedReader(new InputStreamReader(openFileInput("LoginFile")));
-                    StringBuilder sb = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(openFileInput("LoginFile")))) {
                     String line = reader.readLine();
-                    Toast toast = Toast.makeText(getApplicationContext(), "Данные сохранены", Toast.LENGTH_LONG);
-                    toast.show();
-                    while (line != null) {
-                        sb.append(line);
-                        line = reader.readLine();
+
+                    String loginText = login.getText().toString();
+
+                    if (!loginText.equals(line)) {
+                        Toast.makeText(MainActivity.this, "Пользователь не найден!", Toast.LENGTH_SHORT).show();
+                        return;
                     }
-                    return;
                 } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    if (reader != null) {
-                        try {
-                            reader.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
+                    Toast.makeText(MainActivity.this, "Пользователь не найден!", Toast.LENGTH_SHORT).show();
                 }
-                try {
-                    reader = new BufferedReader(new InputStreamReader(openFileInput("PasswordFile")));
-                    StringBuilder sb = new StringBuilder();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(openFileInput("PasswordFile")))) {
                     String line = reader.readLine();
-                    while (line != null) {
-                        sb.append(line);
-                        line = reader.readLine();
+
+                    String passwordText = password.getText().toString();
+
+                    if (!passwordText.equals(line)) {
+                        Toast.makeText(MainActivity.this, "Пароль введён неверно!", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(MainActivity.this, "Всё ок!", Toast.LENGTH_SHORT).show();
                     }
-                    return;
                 } catch (IOException e) {
                     e.printStackTrace();
-                } finally {
-                    if (reader != null) {
-                        try {
-                            reader.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
                 }
             }
         });
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new InputStreamReader(openFileInput("LoginFile")));
+            StringBuilder sb = new StringBuilder();
+            String line = reader.readLine();
+            Toast toast = Toast.makeText(getApplicationContext(), "Данные сохранены", Toast.LENGTH_LONG);
+            toast.show();
+            while (line != null) {
+                sb.append(line);
+                line = reader.readLine();
+            }
+            return;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        try {
+            reader = new BufferedReader(new InputStreamReader(openFileInput("PasswordFile")));
+            StringBuilder sb = new StringBuilder();
+            String line = reader.readLine();
+            while (line != null) {
+                sb.append(line);
+                line = reader.readLine();
+            }
+            return;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
+
 
     public void Loadtxt() {
         if (isExternalStorageWriteble()) {
