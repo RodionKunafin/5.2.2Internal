@@ -1,8 +1,13 @@
 <resources>
     <string name="app_name">5.2.2Internal</string>
-    <string name="btnOk">OK</string>
+    <string name="btnOk">Авторизоваться</string>
     <string name="btnRegistration">REGISTRATION</string>
     <string name="checkBox">Хранить логин во внешнем хранилище</string>
     <string name="btnSave">Запомнить состояние</string>
+    <string name="tos">Пользователь не найден</string>
+    <string name="tos1">Пароль введён неверно!</string>
+    <string name="tos2">Вы вошли</string>
+    <string name="tos3">Пользователь зарегистрирован</string>
+    <string name="tos4">Что-то пошло не так</string>
 
 </resources>

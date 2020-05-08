@@ -3,10 +3,10 @@ package com.example.a522internal;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.Environment;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -15,19 +15,18 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String FILE_NAME = "LoginFile";
+    private final String CHECK_BOX_PREFERENCES = "check";
     EditText login;
     EditText password;
     Button btnOk;
     CheckBox checkBox;
-    Button btnSave;
     Button btnRegistration;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,144 +36,76 @@ public class MainActivity extends AppCompatActivity {
         password = findViewById(R.id.password);
         btnOk = findViewById(R.id.btnOk);
         checkBox = findViewById(R.id.checkBox);
-        btnSave = findViewById(R.id.btnSave);
         btnRegistration = findViewById(R.id.btnRegistration);
 
 
-        btnSave.setOnClickListener(new View.OnClickListener() {
+        final SharedPreferences settings = getSharedPreferences(CHECK_BOX_PREFERENCES, Context.MODE_PRIVATE);
+        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                settings.edit().putBoolean(CHECK_BOX_PREFERENCES, isChecked).apply();
+            }
+        });
+        checkBox.setChecked(settings.getBoolean(CHECK_BOX_PREFERENCES, false));
+        btnOk.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (checkBox.isChecked()) {
-                    SharedPreferences settings = getSharedPreferences("check", 0);
-                    settings.edit().putBoolean("check", true).commit();
-                    Toast toast = Toast.makeText(getApplicationContext(), "Данные сохранены во внешнее хранилище", Toast.LENGTH_LONG);
-                    toast.show();
-                    Loadtxt();
+                boolean externalStorageChecked = checkBox.isChecked();
+                if (externalStorageChecked) {
+                    checkUser(new File(getExternalFilesDir(null), FILE_NAME));
+                } else {
+                    checkUser(new File(getFilesDir(), FILE_NAME));
                 }
             }
         });
         btnRegistration.setOnClickListener(new View.OnClickListener() {
-            {
-                SharedPreferences settings = getSharedPreferences("check", Context.MODE_PRIVATE);
-                settings.edit().putBoolean("check", false).apply();
-                Toast.makeText(getApplicationContext(), "Данные сохранены во внутреннее хранилище", Toast.LENGTH_LONG).show();
-                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(openFileOutput("LoginFile", MODE_PRIVATE)))) {
-                    writer.write("Login");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(openFileOutput("PasswordFile", MODE_PRIVATE)))) {
-                    writer.write("Password");
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-
             @Override
             public void onClick(View v) {
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(getExternalFilesDir(null), "LoginFile")))) {
-                    writer.write(login.getText().toString());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter(new File(getExternalFilesDir(null), "PasswordFile")))) {
-                    writer.write(password.getText().toString());
-                } catch (IOException e) {
-                    e.printStackTrace();
+                boolean externalStorageChecked = checkBox.isChecked();
+
+                if (externalStorageChecked) {
+                    saveUser(new File(getExternalFilesDir(null), FILE_NAME));
+                } else {
+                    saveUser(new File(getFilesDir(), FILE_NAME));
                 }
             }
         });
+    }
 
-        btnOk.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(openFileInput("LoginFile")))) {
-                    String line = reader.readLine();
+    private void checkUser(File file) {
+        try (BufferedReader bufferedReader = new BufferedReader(new FileReader(file))) {
+            String login = bufferedReader.readLine();
 
-                    String loginText = login.getText().toString();
+            String loginText = this.login.getText().toString();
 
-                    if (!loginText.equals(line)) {
-                        Toast.makeText(MainActivity.this, "Пользователь не найден!", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                } catch (IOException e) {
-                    Toast.makeText(MainActivity.this, "Пользователь не найден!", Toast.LENGTH_SHORT).show();
-                }
-                try (BufferedReader reader = new BufferedReader(new InputStreamReader(openFileInput("PasswordFile")))) {
-                    String line = reader.readLine();
-
-                    String passwordText = password.getText().toString();
-
-                    if (!passwordText.equals(line)) {
-                        Toast.makeText(MainActivity.this, "Пароль введён неверно!", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(MainActivity.this, "Всё ок!", Toast.LENGTH_SHORT).show();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            if (!loginText.equals(login)) {
+                Toast.makeText(MainActivity.this, R.string.tos, Toast.LENGTH_SHORT).show();
+                return;
             }
-        });
-        BufferedReader reader = null;
-        try {
-            reader = new BufferedReader(new InputStreamReader(openFileInput("LoginFile")));
-            StringBuilder sb = new StringBuilder();
-            String line = reader.readLine();
-            Toast toast = Toast.makeText(getApplicationContext(), "Данные сохранены", Toast.LENGTH_LONG);
-            toast.show();
-            while (line != null) {
-                sb.append(line);
-                line = reader.readLine();
+
+            String password = bufferedReader.readLine();
+            String passwordText = this.password.getText().toString();
+
+            if (!passwordText.equals(password)) {
+                Toast.makeText(MainActivity.this, R.string.tos1, Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(MainActivity.this, R.string.tos2, Toast.LENGTH_SHORT).show();
             }
-            return;
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            Toast.makeText(MainActivity.this, R.string.tos, Toast.LENGTH_SHORT).show();
         }
-        try {
-            reader = new BufferedReader(new InputStreamReader(openFileInput("PasswordFile")));
-            StringBuilder sb = new StringBuilder();
-            String line = reader.readLine();
-            while (line != null) {
-                sb.append(line);
-                line = reader.readLine();
-            }
-            return;
+    }
+
+    private void saveUser(File file) {
+        try (BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file))) {
+
+            String loginText = this.login.getText().toString();
+            String passwordText = this.password.getText().toString();
+
+            bufferedWriter.write(loginText + "\n" + passwordText);
+            Toast.makeText(MainActivity.this, R.string.tos3, Toast.LENGTH_SHORT).show();
         } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+            Toast.makeText(MainActivity.this, R.string.tos4, Toast.LENGTH_SHORT).show();
         }
     }
-
-
-    public void Loadtxt() {
-        if (isExternalStorageWriteble()) {
-            File file = new File(getApplicationContext().getExternalFilesDir(null), "log.txt");
-        }
-    }
-
-    public boolean isExternalStorageWriteble() {
-        String state = Environment.getExternalStorageState();
-        return Environment.DIRECTORY_DOWNLOADS.equals(state);
-    }
-
-    private boolean load() {
-        SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
-        return sharedPreferences.getBoolean("check", false);
-    }
-
 }
